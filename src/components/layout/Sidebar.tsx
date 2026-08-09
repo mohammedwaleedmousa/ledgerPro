@@ -1,5 +1,5 @@
 import { Crown, Layers3, X } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { appPaths, navigationSections } from "../../routes/navigation";
 
 type Props = {
@@ -8,6 +8,18 @@ type Props = {
 };
 
 export default function Sidebar({ open, onClose }: Props) {
+  const { pathname } = useLocation();
+
+  function isActivePath(path: string) {
+    if (path === appPaths.dashboard) return pathname === path;
+    if (path === appPaths.createInvoice) return pathname === path;
+    if (path === appPaths.invoices) return pathname === path || (pathname.startsWith(`${path}/`) && pathname !== appPaths.createInvoice);
+    if (path === appPaths.products) return pathname === path || pathname.startsWith(`${path}/`);
+    if (path === appPaths.customers) return pathname === path || pathname.startsWith(`${path}/`);
+    if (path === appPaths.journal) return pathname === path || pathname.startsWith(`${path}/`);
+    return pathname === path;
+  }
+
   return (
     <>
       {open && (
@@ -54,16 +66,16 @@ export default function Sidebar({ open, onClose }: Props) {
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
+                  const active = isActivePath(item.path);
 
                   return (
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      end
                       onClick={onClose}
-                      className={({ isActive }) =>
+                      className={() =>
                         `relative flex min-h-10 w-full items-center gap-3 overflow-hidden rounded-[10px] px-3 py-2 text-[13px] font-semibold transition-colors before:absolute before:bottom-2 before:right-0 before:top-2 before:w-0.5 before:rounded-full ${
-                          isActive
+                          active
                             ? "bg-blue-50 text-blue-700 before:bg-blue-600"
                             : "text-slate-600 before:bg-transparent hover:bg-slate-50 hover:text-slate-950"
                         }`

@@ -58,3 +58,30 @@ a {
   border-radius: 999px;
   background: #cbd5e1;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  aside,
+  header.sticky {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .invoice-print {
+    max-width: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}

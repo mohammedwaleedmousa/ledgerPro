@@ -10,7 +10,7 @@ export default function Products() {
   const [categoryId, setCategoryId] = useState("");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ProductHeader search={search} categoryId={categoryId} categories={categories} onSearchChange={setSearch} onCategoryChange={setCategoryId} />
 
       <ProductStats />

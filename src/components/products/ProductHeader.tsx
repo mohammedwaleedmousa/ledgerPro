@@ -1,8 +1,10 @@
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { Category } from "../../types/erp";
 import { appPaths } from "../../routes/navigation";
+import type { Category } from "../../types/erp";
 import Button from "../common/Button";
+import Card from "../common/Card";
+import PageHeader from "../common/PageHeader";
 
 type Props = {
   search: string;
@@ -16,30 +18,9 @@ export default function ProductHeader({ search, categoryId, categories, onSearch
   const navigate = useNavigate();
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6">
-      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">المنتجات</h1>
-          <p className="mt-2 text-gray-500">إدارة المنتجات والمخزون والأسعار</p>
-        </div>
-
-        <Button onClick={() => navigate(appPaths.createProduct)}>
-          <span className="flex items-center gap-2"><Plus size={18} />إضافة منتج</span>
-        </Button>
-      </div>
-
-      <div className="mt-6 grid gap-3 md:grid-cols-[1fr_220px]">
-        <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-          <Search size={18} className="text-gray-400" />
-          <span className="sr-only">البحث عن منتج</span>
-          <input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="الاسم أو SKU..." className="w-full bg-transparent outline-none" />
-        </label>
-
-        <select aria-label="تصفية حسب التصنيف" value={categoryId} onChange={(event) => onCategoryChange(event.target.value)} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 outline-none focus:border-blue-500">
-          <option value="">كل التصنيفات</option>
-          {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-        </select>
-      </div>
-    </div>
+    <>
+      <PageHeader title="المنتجات" description="إدارة كتالوج المنتجات والأسعار ومستويات إعادة الطلب." eyebrow="المنتجات" actions={<Button onClick={() => navigate(appPaths.createProduct)}><Plus size={15} />إضافة منتج</Button>} />
+      <Card className="mt-4 p-3 sm:p-4"><div className="grid gap-3 md:grid-cols-[1fr_220px]"><label className="flex min-h-10 items-center gap-2 rounded-[10px] border border-slate-200 bg-slate-50 px-3"><Search size={15} className="text-slate-400" /><span className="sr-only">البحث عن منتج</span><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="الاسم أو SKU..." className="min-w-0 flex-1 bg-transparent text-xs outline-none" /></label><select aria-label="تصفية حسب التصنيف" value={categoryId} onChange={(event) => onCategoryChange(event.target.value)} className="min-h-10 rounded-[10px] border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 outline-none focus:border-blue-500"><option value="">كل التصنيفات</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div></Card>
+    </>
   );
 }

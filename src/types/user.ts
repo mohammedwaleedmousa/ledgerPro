@@ -1,4 +1,4 @@
-export type UserRole = "owner" | "admin" | "accountant" | "employee";
+export type UserRole = "owner" | "admin" | "accountant" | "sales" | "inventory" | "viewer" | "employee";
 export type AuthMode = "demo" | "supabase";
 
 export interface User {

@@ -33,7 +33,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function isUserRole(value: unknown): value is UserRole {
-  return value === "owner" || value === "admin" || value === "accountant" || value === "employee";
+  return value === "owner" || value === "admin" || value === "accountant" || value === "sales" || value === "inventory" || value === "viewer" || value === "employee";
 }
 
 function createId() {

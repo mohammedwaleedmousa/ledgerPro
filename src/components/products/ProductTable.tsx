@@ -1,5 +1,5 @@
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency, formatNumber } from "../../lib/format";
@@ -16,11 +16,16 @@ export default function ProductTable({ search, categoryId }: Props) {
   const navigate = useNavigate();
   const { products, categories, removeProduct } = useErp();
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const normalizedSearch = search.trim().toLowerCase();
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = useMemo(() => products.filter((product) => {
     const matchesSearch = !normalizedSearch || product.name.toLowerCase().includes(normalizedSearch) || product.sku.toLowerCase().includes(normalizedSearch);
     return matchesSearch && (!categoryId || product.categoryId === categoryId);
-  });
+  }), [categoryId, normalizedSearch, products]);
+  const pageSize = 25;
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   function handleDelete(id: string, name: string) {
     if (!window.confirm(`هل تريد حذف المنتج «${name}»؟`)) return;
@@ -34,39 +39,40 @@ export default function ProductTable({ search, categoryId }: Props) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-      <Table>
-        <thead className="border-b bg-gray-50">
+      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-[11px] text-rose-700">{error}</div>}
+      <Table minWidth="820px">
+        <thead className="border-b border-slate-100 bg-slate-50/70">
           <tr>
-            <th className="p-5 text-sm text-gray-500">المنتج</th>
-            <th className="p-5 text-sm text-gray-500">SKU</th>
-            <th className="p-5 text-sm text-gray-500">التصنيف</th>
-            <th className="p-5 text-sm text-gray-500">التكلفة</th>
-            <th className="p-5 text-sm text-gray-500">السعر</th>
-            <th className="p-5 text-sm text-gray-500">المخزون</th>
-            <th className="p-5 text-sm text-gray-500">الإجراءات</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">المنتج</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">SKU</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">التصنيف</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">التكلفة</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">السعر</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">المخزون</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
-          {filteredProducts.map((product) => (
-            <tr key={product.id} className="border-b last:border-none">
-              <td className="p-5 font-medium">{product.name}</td>
-              <td className="p-5 font-mono text-sm text-gray-500">{product.sku}</td>
-              <td className="p-5 text-gray-500">{categories.find((category) => category.id === product.categoryId)?.name ?? "بدون تصنيف"}</td>
-              <td className="p-5 text-gray-600">{formatCurrency(product.cost)}</td>
-              <td className="p-5 font-semibold">{formatCurrency(product.price)}</td>
-              <td className="p-5"><Badge variant={product.stock <= product.lowStockThreshold ? "warning" : "success"}>{formatNumber(product.stock)} {product.stock <= product.lowStockThreshold ? "منخفض" : "متوفر"}</Badge></td>
-              <td className="p-5">
+          {visibleProducts.map((product) => (
+            <tr key={product.id} className="border-b border-slate-100 last:border-none hover:bg-slate-50/50">
+              <td className="p-4 text-xs font-bold text-slate-800">{product.name}</td>
+              <td className="p-4 font-mono text-[10px] font-bold text-blue-700">{product.sku}</td>
+              <td className="p-4 text-[10px] text-slate-500">{categories.find((category) => category.id === product.categoryId)?.name ?? "بدون تصنيف"}</td>
+              <td className="p-4 text-[10px] text-slate-600">{formatCurrency(product.cost)}</td>
+              <td className="p-4 text-xs font-extrabold text-slate-900">{formatCurrency(product.price)}</td>
+              <td className="p-4"><Badge variant={product.stock <= product.lowStockThreshold ? "warning" : "success"}>{formatNumber(product.stock)} {product.stock <= product.lowStockThreshold ? "منخفض" : "متوفر"}</Badge></td>
+              <td className="p-4">
                 <div className="flex items-center gap-2">
-                  <button type="button" aria-label={`تعديل ${product.name}`} className="rounded-lg p-2 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editProduct(product.id))}><Pencil size={17} /></button>
-                  <button type="button" aria-label={`حذف ${product.name}`} className="rounded-lg p-2 text-red-500 hover:bg-red-50" onClick={() => handleDelete(product.id, product.name)}><Trash2 size={17} /></button>
+                  <button type="button" aria-label={`تعديل ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editProduct(product.id))}><Pencil size={13} /></button>
+                  <button type="button" aria-label={`حذف ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(product.id, product.name)}><Trash2 size={13} /></button>
                 </div>
               </td>
             </tr>
           ))}
-          {filteredProducts.length === 0 && <tr><td colSpan={7} className="p-10 text-center text-gray-400">لا توجد منتجات مطابقة.</td></tr>}
+          {filteredProducts.length === 0 && <tr><td colSpan={7} className="p-12 text-center text-xs text-slate-400">لا توجد منتجات مطابقة.</td></tr>}
         </tbody>
       </Table>
+      {filteredProducts.length > 0 && <div className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:flex-row sm:items-center"><p className="text-[10px] text-slate-500">عرض {formatNumber((currentPage - 1) * pageSize + 1)}–{formatNumber(Math.min(currentPage * pageSize, filteredProducts.length))} من {formatNumber(filteredProducts.length)}</p><div className="flex items-center gap-2"><button type="button" aria-label="الصفحة السابقة" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"><ChevronRight size={14} /></button><span className="min-w-20 text-center text-[10px] font-bold text-slate-600">{formatNumber(currentPage)} / {formatNumber(pageCount)}</span><button type="button" aria-label="الصفحة التالية" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"><ChevronLeft size={14} /></button></div></div>}
     </div>
   );
 }

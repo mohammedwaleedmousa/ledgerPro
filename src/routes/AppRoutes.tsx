@@ -10,12 +10,19 @@ const NotFound = lazy(() => import("../pages/NotFound"));
 const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
 const Invoices = lazy(() => import("../pages/dashboard/Invoices"));
 const CreateInvoice = lazy(() => import("../pages/dashboard/CreateInvoice"));
+const InvoiceDetails = lazy(() => import("../pages/dashboard/InvoiceDetails"));
+const Quotations = lazy(() => import("../pages/dashboard/Quotations"));
+const Payments = lazy(() => import("../pages/dashboard/Payments"));
+const SalesReturns = lazy(() => import("../pages/dashboard/SalesReturns"));
+const PurchaseOrders = lazy(() => import("../pages/dashboard/PurchaseOrders"));
 const Products = lazy(() => import("../pages/dashboard/Products"));
 const CreateProduct = lazy(() => import("../pages/dashboard/CreateProduct"));
 const Categories = lazy(() => import("../pages/dashboard/Categories"));
 const Inventory = lazy(() => import("../pages/dashboard/Inventory"));
+const Warehouses = lazy(() => import("../pages/dashboard/Warehouses"));
 const Customers = lazy(() => import("../pages/dashboard/Customers"));
 const CreateCustomer = lazy(() => import("../pages/dashboard/CreateCustomer"));
+const CustomerDetails = lazy(() => import("../pages/dashboard/CustomerDetails"));
 const Suppliers = lazy(() => import("../pages/dashboard/Suppliers"));
 const Expenses = lazy(() => import("../pages/dashboard/Expenses"));
 const Accounts = lazy(() => import("../pages/dashboard/Accounts"));
@@ -23,6 +30,8 @@ const Journal = lazy(() => import("../pages/dashboard/Journal"));
 const CreateJournal = lazy(() => import("../pages/dashboard/CreateJournal"));
 const Reports = lazy(() => import("../pages/dashboard/Reports"));
 const AIAssistant = lazy(() => import("../pages/dashboard/AIAssistant"));
+const Team = lazy(() => import("../pages/dashboard/Team"));
+const ActivityLog = lazy(() => import("../pages/dashboard/ActivityLog"));
 const Settings = lazy(() => import("../pages/dashboard/Settings"));
 
 function RouteLoader() {
@@ -54,14 +63,21 @@ export default function AppRoutes() {
             <Route index element={<Dashboard />} />
             <Route path="invoices" element={<Invoices />} />
             <Route path="invoices/create" element={<CreateInvoice />} />
+            <Route path="invoices/:invoiceId" element={<InvoiceDetails />} />
+            <Route path="quotations" element={<Quotations />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="returns" element={<SalesReturns />} />
+            <Route path="purchases" element={<PurchaseOrders />} />
             <Route path="products" element={<Products />} />
             <Route path="products/create" element={<CreateProduct />} />
             <Route path="products/:productId/edit" element={<CreateProduct />} />
             <Route path="categories" element={<Categories />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="warehouses" element={<Warehouses />} />
             <Route path="customers" element={<Customers />} />
             <Route path="customers/create" element={<CreateCustomer />} />
             <Route path="customers/:customerId/edit" element={<CreateCustomer />} />
+            <Route path="customers/:customerId" element={<CustomerDetails />} />
             <Route path="suppliers" element={<Suppliers />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="accounts" element={<Accounts />} />
@@ -69,6 +85,8 @@ export default function AppRoutes() {
             <Route path="journal/create" element={<CreateJournal />} />
             <Route path="reports" element={<Reports />} />
             <Route path="ai" element={<AIAssistant />} />
+            <Route path="team" element={<Team />} />
+            <Route path="activity" element={<ActivityLog />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Route>

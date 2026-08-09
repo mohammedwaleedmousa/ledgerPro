@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
@@ -30,33 +30,34 @@ export default function CustomerTable({ search }: Props) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-      <Table>
-        <thead className="border-b bg-gray-50">
+      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-[11px] text-rose-700">{error}</div>}
+      <Table minWidth="760px">
+        <thead className="border-b border-slate-100 bg-slate-50/70">
           <tr>
-            <th className="p-5 text-sm text-gray-500">العميل</th>
-            <th className="p-5 text-sm text-gray-500">الهاتف</th>
-            <th className="p-5 text-sm text-gray-500">الرصيد</th>
-            <th className="p-5 text-sm text-gray-500">الفواتير</th>
-            <th className="p-5 text-sm text-gray-500">الحالة</th>
-            <th className="p-5 text-sm text-gray-500">الإجراءات</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">العميل</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الهاتف</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الرصيد</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الفواتير</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الحالة</th>
+            <th className="p-4 text-[9px] font-bold text-slate-400">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
           {filteredCustomers.map((customer) => (
-            <tr key={customer.id} className="border-b last:border-none">
-              <td className="p-5"><p className="font-medium">{customer.name}</p><p className="mt-1 text-xs text-gray-400">{customer.email || "لا يوجد بريد"}</p></td>
-              <td className="p-5 text-gray-500">{customer.phone || "—"}</td>
-              <td className="p-5 font-semibold">{formatCurrency(customer.balance)}</td>
-              <td className="p-5 text-gray-500">{invoices.filter((invoice) => invoice.customerId === customer.id).length}</td>
-              <td className="p-5"><Badge variant={customer.status === "active" ? "success" : "danger"}>{customer.status === "active" ? "نشط" : "غير نشط"}</Badge></td>
-              <td className="p-5"><div className="flex items-center gap-2">
-                <button type="button" aria-label={`تعديل ${customer.name}`} className="rounded-lg p-2 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editCustomer(customer.id))}><Pencil size={17} /></button>
-                <button type="button" aria-label={`حذف ${customer.name}`} className="rounded-lg p-2 text-red-500 hover:bg-red-50" onClick={() => handleDelete(customer.id, customer.name)}><Trash2 size={17} /></button>
+            <tr key={customer.id} className="border-b border-slate-100 last:border-none hover:bg-slate-50/50">
+              <td className="p-4"><p className="text-xs font-bold text-slate-800">{customer.name}</p><p className="mt-1 text-[9px] text-slate-400">{customer.email || "لا يوجد بريد"}</p></td>
+              <td className="p-4 text-[10px] text-slate-500">{customer.phone || "—"}</td>
+              <td className="p-4 text-xs font-extrabold text-slate-900">{formatCurrency(customer.balance)}</td>
+              <td className="p-4 text-[10px] text-slate-500">{invoices.filter((invoice) => invoice.customerId === customer.id).length}</td>
+              <td className="p-4"><Badge variant={customer.status === "active" ? "success" : "danger"}>{customer.status === "active" ? "نشط" : "غير نشط"}</Badge></td>
+              <td className="p-4"><div className="flex items-center gap-2">
+                <button type="button" aria-label={`عرض ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600" onClick={() => navigate(appPaths.customerDetails(customer.id))}><Eye size={13} /></button>
+                <button type="button" aria-label={`تعديل ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editCustomer(customer.id))}><Pencil size={13} /></button>
+                <button type="button" aria-label={`حذف ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(customer.id, customer.name)}><Trash2 size={13} /></button>
               </div></td>
             </tr>
           ))}
-          {filteredCustomers.length === 0 && <tr><td colSpan={6} className="p-10 text-center text-gray-400">لا يوجد عملاء مطابقون.</td></tr>}
+          {filteredCustomers.length === 0 && <tr><td colSpan={6} className="p-12 text-center text-xs text-slate-400">لا يوجد عملاء مطابقون.</td></tr>}
         </tbody>
       </Table>
     </div>

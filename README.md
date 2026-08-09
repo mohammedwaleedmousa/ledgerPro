@@ -8,10 +8,13 @@ LedgerPro is an Arabic-first SaaS ERP dashboard built with React, TypeScript, Vi
 - Demo authentication and persistent browser session.
 - Optional Supabase email/password authentication and session handling.
 - Product and customer CRUD with search and filtering.
-- Invoice creation with customer selection, editable items, tax calculations, and statuses.
-- Automatic stock deduction, stock movements, manual adjustments, and low-stock alerts.
-- Categories, suppliers, expenses, dashboard KPIs, and persistent demo data.
-- Multi-tenant PostgreSQL schema with explicit grants, RLS policies, indexes, and automatic company/profile creation.
+- Customer statements with invoices, receipts, returns, balances, and printable history.
+- Invoice creation, printable invoice details, quotations, quotation-to-invoice conversion, receipts, payments, and sales returns.
+- Purchase orders with a draft/order/receive workflow that updates stock and supplier balances.
+- Automatic stock movements, manual adjustments, dynamic low-stock alerts, and warehouse foundations.
+- Expenses, suppliers, chart of accounts, balanced journal entries, and data-driven financial reports.
+- Team roles, activity log, company currency/tax/document settings, and deterministic in-app business insights.
+- Multi-tenant PostgreSQL migrations with explicit grants, RLS, composite tenant foreign keys, cursor indexes, private invitations, and concurrency-safe document numbers.
 
 ## Run the demo
 
@@ -34,10 +37,18 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 VITE_ENABLE_DEMO_MODE=true
 ```
 
-4. Apply the migration in `supabase/migrations` to the LedgerPro project and run Supabase security/performance advisors.
+4. Review and apply the migrations in timestamp order to the dedicated LedgerPro project, then run Supabase security and performance advisors.
 5. Keep secret and `service_role` keys out of the frontend and out of Git.
 
-The migration creates a company and owner profile transactionally when a user signs up. Every business row includes `company_id`, and RLS restricts authenticated users to their own company.
+The initial migration creates the company and owner profile transactionally. The launch migration adds the remaining ERP modules, default settings, warehouse, accounts, server-managed invitations, and per-company document sequences. Every public business row is tenant-scoped, and RLS limits reads to the authenticated user's company.
+
+## Production boundary
+
+The browser demo intentionally stores ERP records in `localStorage` so every workflow can be tested without touching a real database. Supabase Auth can be enabled independently, but that does not move ERP data to PostgreSQL.
+
+The NestJS backend is not present in this GitHub repository. Before a public launch, connect the UI to the dedicated API and execute financial mutations through server-side transactions. The launch migration already revokes browser writes to accounting-critical tables so invoice posting, receiving purchases, payments, returns, journal posting, stock changes, and audit logging cannot become partially committed operations.
+
+For large product catalogs, use the `(company_id, created_at, id)` cursor indexes from the migrations instead of offset pagination.
 
 ## Validation
 
@@ -48,4 +59,4 @@ npm run build
 npm audit
 ```
 
-The NestJS backend is not present in the GitHub repository yet. Invoice posting and other accounting-critical multi-table operations should move into transactional backend services before production launch.
+CI runs the same type, lint, build, and high-severity dependency checks on pushes and pull requests.

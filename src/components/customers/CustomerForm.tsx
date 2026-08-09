@@ -41,24 +41,25 @@ export default function CustomerForm() {
   return (
     <form onSubmit={handleSubmit}>
       <Card>
-        <h2 className="text-lg font-bold text-gray-900">بيانات العميل</h2>
-        {error && <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        <h2 className="text-sm font-black text-slate-900">بيانات العميل</h2>
+        <p className="mt-1 text-[10px] text-slate-400">بيانات التواصل والضرائب والرصيد الافتتاحي.</p>
+        {error && <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-3 text-[11px] text-rose-700">{error}</div>}
 
-        <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input label="اسم العميل" placeholder="مثال: شركة التقنية" value={name} onChange={(event) => setName(event.target.value)} required />
           <Input label="البريد الإلكتروني" type="email" placeholder="email@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
           <Input label="رقم الهاتف" placeholder="+967 xxx xxx xxx" value={phone} onChange={(event) => setPhone(event.target.value)} />
           <Input label="الرقم الضريبي" placeholder="VAT Number" value={taxNumber} onChange={(event) => setTaxNumber(event.target.value)} />
           <Input label="العنوان" placeholder="عنوان العميل" value={address} onChange={(event) => setAddress(event.target.value)} />
           <Input label="الرصيد" type="number" step="0.01" min="0" value={balance} onChange={(event) => setBalance(event.target.value)} required />
-          <div className="space-y-2">
-            <label htmlFor="customer-status" className="block text-sm font-medium text-gray-600">الحالة</label>
-            <select id="customer-status" value={status} onChange={(event) => setStatus(event.target.value as "active" | "inactive")} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"><option value="active">نشط</option><option value="inactive">غير نشط</option></select>
+          <div className="space-y-1.5">
+            <label htmlFor="customer-status" className="block text-[11px] font-bold text-slate-600">الحالة</label>
+            <select id="customer-status" value={status} onChange={(event) => setStatus(event.target.value as "active" | "inactive")} className="min-h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"><option value="active">نشط</option><option value="inactive">غير نشط</option></select>
           </div>
           <Input label="ملاحظات" placeholder="ملاحظات إضافية..." value={notes} onChange={(event) => setNotes(event.target.value)} />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Button type="submit" loading={saving}>{existing ? "حفظ التعديلات" : "حفظ العميل"}</Button>
           <Button variant="secondary" onClick={() => navigate(appPaths.customers)}>إلغاء</Button>
         </div>

@@ -1,5 +1,8 @@
+import { Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency, formatDate } from "../../lib/format";
+import { appPaths } from "../../routes/navigation";
 import type { InvoiceStatus } from "../../types/erp";
 import Table from "../common/Table";
 
@@ -23,33 +26,35 @@ export default function InvoiceTable({ search }: { search: string }) {
   const filteredInvoices = invoices.filter((invoice) => !normalizedSearch || invoice.number.toLowerCase().includes(normalizedSearch) || invoice.customerName.toLowerCase().includes(normalizedSearch));
 
   return (
-    <Table>
-      <thead className="border-b bg-gray-50">
+    <Table minWidth="760px">
+      <thead className="border-b border-slate-100 bg-slate-50/70">
         <tr>
-          <th className="p-5 text-sm font-medium text-gray-500">الرقم</th>
-          <th className="p-5 text-sm font-medium text-gray-500">العميل</th>
-          <th className="p-5 text-sm font-medium text-gray-500">التاريخ</th>
-          <th className="p-5 text-sm font-medium text-gray-500">العناصر</th>
-          <th className="p-5 text-sm font-medium text-gray-500">الإجمالي</th>
-          <th className="p-5 text-sm font-medium text-gray-500">الحالة</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">الرقم</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">العميل</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">التاريخ</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">العناصر</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">الإجمالي</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">الحالة</th>
+          <th className="p-4 text-[9px] font-bold text-slate-400">عرض</th>
         </tr>
       </thead>
       <tbody>
         {filteredInvoices.map((invoice) => (
-          <tr key={invoice.id} className="border-b last:border-none">
-            <td className="p-5 font-mono text-sm font-semibold text-blue-700">{invoice.number}</td>
-            <td className="p-5 text-gray-600">{invoice.customerName}</td>
-            <td className="p-5 text-gray-500">{formatDate(invoice.issueDate)}</td>
-            <td className="p-5 text-gray-500">{invoice.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
-            <td className="p-5 font-semibold">{formatCurrency(invoice.total)}</td>
-            <td className="p-5">
-              <select aria-label={`حالة الفاتورة ${invoice.number}`} value={invoice.status} onChange={(event) => updateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)} className={`rounded-full border-0 px-3 py-1.5 text-sm font-medium outline-none ${statusStyles[invoice.status]}`}>
+          <tr key={invoice.id} className="border-b border-slate-100 last:border-none hover:bg-slate-50/50">
+            <td className="p-4 font-mono text-[11px] font-bold text-blue-700">{invoice.number}</td>
+            <td className="p-4 text-xs font-bold text-slate-700">{invoice.customerName}</td>
+            <td className="p-4 text-[10px] text-slate-500">{formatDate(invoice.issueDate)}</td>
+            <td className="p-4 text-[10px] text-slate-500">{invoice.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
+            <td className="p-4 text-xs font-extrabold text-slate-900">{formatCurrency(invoice.total)}</td>
+            <td className="p-4">
+              <select aria-label={`حالة الفاتورة ${invoice.number}`} value={invoice.status} onChange={(event) => updateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)} className={`rounded-full border-0 px-2.5 py-1.5 text-[9px] font-bold outline-none ${statusStyles[invoice.status]}`}>
                 {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </td>
+            <td className="p-4"><Link to={appPaths.invoiceDetails(invoice.id)} aria-label={`عرض ${invoice.number}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-blue-200 hover:text-blue-600"><Eye size={14} /></Link></td>
           </tr>
         ))}
-        {filteredInvoices.length === 0 && <tr><td colSpan={6} className="p-10 text-center text-gray-400">لا توجد فواتير مطابقة.</td></tr>}
+        {filteredInvoices.length === 0 && <tr><td colSpan={7} className="p-10 text-center text-xs text-slate-400">لا توجد فواتير مطابقة.</td></tr>}
       </tbody>
     </Table>
   );
