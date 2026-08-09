@@ -7,13 +7,13 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-gray-50" dir="rtl">
+    <div className="min-h-dvh overflow-x-clip bg-[#f3f5f8]" dir="rtl">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="min-h-dvh min-w-0 lg:mr-72">
+      <div className="min-h-dvh min-w-0 lg:mr-[260px]">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="mx-auto min-w-0 w-full max-w-[1600px] overflow-x-clip p-4 md:p-6 lg:p-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1720px] overflow-x-clip p-4 md:p-5 xl:p-6">
           <Suspense
             fallback={
               <div className="flex min-h-[55vh] items-center justify-center" role="status" aria-live="polite">
