@@ -1,6 +1,10 @@
 import { Plus, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { appPaths } from "../../routes/navigation";
 
 export default function InvoiceHeader() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-white p-6 lg:flex-row lg:items-center lg:justify-between">
       <div>
@@ -23,7 +27,7 @@ export default function InvoiceHeader() {
           />
         </div>
 
-        <button className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700">
+        <button type="button" onClick={() => navigate(appPaths.createInvoice)} className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700">
           <Plus size={18} />
           إنشاء فاتورة
         </button>

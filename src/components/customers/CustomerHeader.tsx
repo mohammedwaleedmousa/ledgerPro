@@ -1,6 +1,7 @@
 import { Plus, Search } from "lucide-react";
 import Button from "../common/Button";
 import { useNavigate } from "react-router-dom";
+import { appPaths } from "../../routes/navigation";
 
 export default function CustomerHeader() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function CustomerHeader() {
           </p>
         </div>
 
-        <Button onClick={() => navigate("/app/customers/create")}>
+        <Button onClick={() => navigate(appPaths.createCustomer)}>
           <span className="flex items-center gap-2">
             <Plus size={18} />
             إضافة عميل

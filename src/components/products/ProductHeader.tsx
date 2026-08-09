@@ -1,7 +1,11 @@
 import { Plus, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { appPaths } from "../../routes/navigation";
 import Button from "../common/Button";
 
 export default function ProductHeader() {
+  const navigate = useNavigate();
+
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-6">
       <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
@@ -15,7 +19,7 @@ export default function ProductHeader() {
           </p>
         </div>
 
-        <Button>
+        <Button onClick={() => navigate(appPaths.createProduct)}>
           <span className="flex items-center gap-2">
             <Plus size={18} />
             إضافة منتج
