@@ -4,12 +4,15 @@ import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { CompanyProvider } from "./context/CompanyContext";
+import { ErpProvider } from "./context/ErpContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <CompanyProvider>
-        <App />
+        <ErpProvider>
+          <App />
+        </ErpProvider>
       </CompanyProvider>
     </AuthProvider>
   </React.StrictMode>

@@ -34,6 +34,8 @@ export const appPaths = {
   createJournal: "/app/journal/create",
   ai: "/app/ai",
   settings: "/app/settings",
+  editProduct: (productId: string) => `/app/products/${productId}/edit`,
+  editCustomer: (customerId: string) => `/app/customers/${customerId}/edit`,
 } as const;
 
 export type NavigationItem = {

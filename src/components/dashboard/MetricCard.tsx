@@ -28,9 +28,7 @@ export default function MetricCard({ title, value, change, icon, positive = true
       </h2>
 
 
-      <p className={`mt-3 text-sm ${positive ? "text-green-600" : "text-red-500"}`}>
-        {change} مقارنة بالشهر الماضي
-      </p>
+      <p className={`mt-3 text-sm ${positive ? "text-green-600" : "text-red-500"}`}>{change}</p>
 
     </div>
   );

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "../guards/ProtectedRoute";
+import PublicOnlyRoute from "../guards/PublicOnlyRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 
 const Login = lazy(() => import("../pages/auth/Login"));
@@ -39,8 +40,8 @@ export default function AppRoutes() {
       <Suspense fallback={<RouteLoader />}>
         <Routes>
           <Route path="/" element={<Navigate to="/app" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+          <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
           <Route
             path="/app"
@@ -55,10 +56,12 @@ export default function AppRoutes() {
             <Route path="invoices/create" element={<CreateInvoice />} />
             <Route path="products" element={<Products />} />
             <Route path="products/create" element={<CreateProduct />} />
+            <Route path="products/:productId/edit" element={<CreateProduct />} />
             <Route path="categories" element={<Categories />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="customers" element={<Customers />} />
             <Route path="customers/create" element={<CreateCustomer />} />
+            <Route path="customers/:customerId/edit" element={<CreateCustomer />} />
             <Route path="suppliers" element={<Suppliers />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="accounts" element={<Accounts />} />
