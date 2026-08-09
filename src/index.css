@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "Inter", "Tajawal", sans-serif;
+  background: #f8fafc;
+  color: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
