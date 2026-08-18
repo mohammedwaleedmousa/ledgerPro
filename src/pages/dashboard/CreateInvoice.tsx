@@ -53,6 +53,7 @@ export default function CreateInvoice() {
   const [items, setItems] = useState<InvoiceInput["items"]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const effectiveStatus: InvoiceStatus = isProductionMode ? (paymentMethod === "credit" ? "sent" : "paid") : status;
 
   useEffect(() => {
     if (!isProductionMode) {
@@ -106,10 +107,6 @@ export default function CreateInvoice() {
 
     try {
       if (isProductionMode) {
-        if (status === "draft") {
-          throw new Error("حفظ المسودات على الخادم سيُضاف في المرحلة التالية. اختر حالة غير مسودة لترحيل الفاتورة الآن.");
-        }
-
         const result = await apiRequest<PostedInvoiceResult>("/invoices/post", {
           method: "POST",
           body: JSON.stringify({
@@ -154,7 +151,7 @@ export default function CreateInvoice() {
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">جارٍ تحميل العملاء والمنتجات من الخادم...</div>
       ) : (
         <>
-          <InvoiceForm customers={customers} customerId={customerId} issueDate={issueDate} paymentMethod={paymentMethod} status={status} notes={notes} onCustomerChange={setCustomerId} onIssueDateChange={setIssueDate} onPaymentMethodChange={setPaymentMethod} onStatusChange={setStatus} onNotesChange={setNotes} />
+          <InvoiceForm customers={customers} customerId={customerId} issueDate={issueDate} paymentMethod={paymentMethod} status={effectiveStatus} statusLocked={isProductionMode} notes={notes} onCustomerChange={setCustomerId} onIssueDateChange={setIssueDate} onPaymentMethodChange={setPaymentMethod} onStatusChange={setStatus} onNotesChange={setNotes} />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             <div className="xl:col-span-2"><InvoiceItems products={products} items={items} onItemsChange={setItems} /></div>
             <InvoiceSummary subtotal={subtotal} taxRate={taxRate} taxAmount={taxAmount} total={total} saving={saving} onTaxRateChange={setTaxRate} onSave={() => void handleSave()} />
