@@ -17,9 +17,19 @@ export class ErpController {
     return this.erpService.products(request.user, query);
   }
 
+  @Get('products/:productId')
+  productDetails(@Req() request: AuthenticatedRequest, @Param('productId') productId: string) {
+    return this.erpService.productDetails(request.user, productId);
+  }
+
   @Get('customers')
   customers(@Req() request: AuthenticatedRequest, @Query() query: Record<string, unknown>) {
     return this.erpService.customers(request.user, query);
+  }
+
+  @Get('customers/:customerId')
+  customerDetails(@Req() request: AuthenticatedRequest, @Param('customerId') customerId: string) {
+    return this.erpService.customerDetails(request.user, customerId);
   }
 
   @Get('invoices')
