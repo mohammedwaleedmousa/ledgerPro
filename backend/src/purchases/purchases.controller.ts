@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
+import { idempotencyKey } from '../common/idempotency';
 import { Roles, RolesGuard } from '../auth/roles';
 import { PurchasesService } from './purchases.service';
 import type { PurchaseOrderWriteInput } from './purchases.types';
@@ -17,7 +18,7 @@ export class PurchasesController {
   @Post()
   @Roles('owner', 'admin', 'accountant', 'inventory')
   create(@Req() request: AuthenticatedRequest, @Body() body: PurchaseOrderWriteInput) {
-    return this.purchasesService.create(request.user, body);
+    return this.purchasesService.create(request.user, body, idempotencyKey(request));
   }
 
   @Patch(':purchaseOrderId/ordered')
@@ -29,6 +30,6 @@ export class PurchasesController {
   @Post(':purchaseOrderId/receive')
   @Roles('owner', 'admin', 'accountant', 'inventory')
   receive(@Req() request: AuthenticatedRequest, @Param('purchaseOrderId') purchaseOrderId: string) {
-    return this.purchasesService.receive(request.user, purchaseOrderId);
+    return this.purchasesService.receive(request.user, purchaseOrderId, idempotencyKey(request));
   }
 }
