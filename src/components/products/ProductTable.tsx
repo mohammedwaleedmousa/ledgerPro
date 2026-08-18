@@ -4,17 +4,23 @@ import { useNavigate } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency, formatNumber } from "../../lib/format";
 import { appPaths } from "../../routes/navigation";
+import type { Category, Product } from "../../types/erp";
 import Badge from "../common/Badge";
 import Table from "../common/Table";
 
 type Props = {
   search: string;
   categoryId: string;
+  products?: Product[];
+  categories?: Category[];
+  readOnlyActions?: boolean;
 };
 
-export default function ProductTable({ search, categoryId }: Props) {
+export default function ProductTable({ search, categoryId, products: suppliedProducts, categories: suppliedCategories, readOnlyActions = false }: Props) {
   const navigate = useNavigate();
-  const { products, categories, removeProduct } = useErp();
+  const erp = useErp();
+  const products = suppliedProducts ?? erp.products;
+  const categories = suppliedCategories ?? erp.categories;
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const normalizedSearch = search.trim().toLowerCase();
@@ -28,9 +34,10 @@ export default function ProductTable({ search, categoryId }: Props) {
   const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   function handleDelete(id: string, name: string) {
+    if (readOnlyActions) return;
     if (!window.confirm(`هل تريد حذف المنتج «${name}»؟`)) return;
     try {
-      removeProduct(id);
+      erp.removeProduct(id);
       setError(null);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "تعذر حذف المنتج.");
@@ -62,10 +69,14 @@ export default function ProductTable({ search, categoryId }: Props) {
               <td className="p-4 text-xs font-extrabold text-slate-900">{formatCurrency(product.price)}</td>
               <td className="p-4"><Badge variant={product.stock <= product.lowStockThreshold ? "warning" : "success"}>{formatNumber(product.stock)} {product.stock <= product.lowStockThreshold ? "منخفض" : "متوفر"}</Badge></td>
               <td className="p-4">
-                <div className="flex items-center gap-2">
-                  <button type="button" aria-label={`تعديل ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editProduct(product.id))}><Pencil size={13} /></button>
-                  <button type="button" aria-label={`حذف ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(product.id, product.name)}><Trash2 size={13} /></button>
-                </div>
+                {readOnlyActions ? (
+                  <span className="text-[9px] font-medium text-slate-400">إدارة الخادم قيد الربط</span>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button type="button" aria-label={`تعديل ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editProduct(product.id))}><Pencil size={13} /></button>
+                    <button type="button" aria-label={`حذف ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(product.id, product.name)}><Trash2 size={13} /></button>
+                  </div>
+                )}
               </td>
             </tr>
           ))}
