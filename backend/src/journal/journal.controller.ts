@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
 import { Roles, RolesGuard } from '../auth/roles';
 import { JournalService } from './journal.service';
@@ -12,6 +12,17 @@ export class JournalController {
   @Get('accounts')
   accounts(@Req() request: AuthenticatedRequest) {
     return this.journalService.accounts(request.user);
+  }
+
+  @Get('period-lock')
+  periodLock(@Req() request: AuthenticatedRequest) {
+    return this.journalService.periodLock(request.user);
+  }
+
+  @Put('period-lock')
+  @Roles('owner', 'admin')
+  setPeriodLock(@Req() request: AuthenticatedRequest, @Body() body: { lockedThrough: string | null }) {
+    return this.journalService.setPeriodLock(request.user, body.lockedThrough);
   }
 
   @Get()
