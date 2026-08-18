@@ -5,12 +5,16 @@ import type { PostInvoiceInput, PostedInvoiceResult } from './invoices.types';
 @Injectable()
 export class InvoicesService {
   private readonly supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
-  private readonly serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  private readonly serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   private assertConfigured() {
-    if (!this.supabaseUrl || !this.serviceRoleKey) {
-      throw new BadRequestException('Backend database connection is not configured.');
-    }
+    if (!this.supabaseUrl || !this.serviceKey) throw new BadRequestException('Backend database connection is not configured.');
+  }
+
+  private headers(extra: Record<string, string> = {}) {
+    const headers: Record<string, string> = { apikey: this.serviceKey!, Accept: 'application/json', ...extra };
+    if (this.serviceKey?.startsWith('eyJ')) headers.Authorization = `Bearer ${this.serviceKey}`;
+    return headers;
   }
 
   private validate(input: PostInvoiceInput) {
@@ -19,7 +23,6 @@ export class InvoicesService {
     if (!['cash', 'bank', 'card', 'credit'].includes(input.paymentMethod)) throw new BadRequestException('Invalid paymentMethod.');
     if (!Number.isFinite(input.taxRate) || input.taxRate < 0 || input.taxRate > 100) throw new BadRequestException('taxRate must be between 0 and 100.');
     if (!Array.isArray(input.items) || input.items.length === 0) throw new BadRequestException('At least one invoice item is required.');
-
     const ids = new Set<string>();
     for (const item of input.items) {
       if (!item.productId) throw new BadRequestException('Each item requires productId.');
@@ -33,15 +36,9 @@ export class InvoicesService {
   async postInvoice(user: AuthenticatedUser, input: PostInvoiceInput): Promise<PostedInvoiceResult> {
     this.assertConfigured();
     this.validate(input);
-
     const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_invoice`, {
       method: 'POST',
-      headers: {
-        apikey: this.serviceRoleKey!,
-        Authorization: `Bearer ${this.serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers: this.headers({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         p_actor_id: user.id,
         p_customer_id: input.customerId,
@@ -49,36 +46,16 @@ export class InvoicesService {
         p_payment_method: input.paymentMethod,
         p_tax_rate: input.taxRate,
         p_notes: input.notes?.trim() ?? '',
-        p_items: input.items.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-        })),
+        p_items: input.items.map((item) => ({ product_id: item.productId, quantity: item.quantity, unit_price: item.unitPrice })),
       }),
     });
-
     const raw = await response.text();
     if (!response.ok) {
       let message = 'Unable to post invoice.';
-      try {
-        const parsed = JSON.parse(raw) as { message?: string; details?: string };
-        message = parsed.message ?? parsed.details ?? message;
-      } catch {
-        if (raw) message = raw;
-      }
+      try { const parsed = JSON.parse(raw) as { message?: string; details?: string }; message = parsed.message ?? parsed.details ?? message; } catch { if (raw) message = raw; }
       throw new BadRequestException(message);
     }
-
-    const parsed = JSON.parse(raw) as {
-      invoice_id: string;
-      invoice_number: string;
-      total: number | string;
-    };
-
-    return {
-      invoiceId: parsed.invoice_id,
-      invoiceNumber: parsed.invoice_number,
-      total: Number(parsed.total),
-    };
+    const parsed = JSON.parse(raw) as { invoice_id: string; invoice_number: string; total: number | string };
+    return { invoiceId: parsed.invoice_id, invoiceNumber: parsed.invoice_number, total: Number(parsed.total) };
   }
 }
