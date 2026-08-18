@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useErp } from "../../context/ErpContext";
 import { apiRequest } from "../../lib/api";
 import { appPaths } from "../../routes/navigation";
+import type { Customer } from "../../types/erp";
 import Button from "../common/Button";
 import Card from "../common/Card";
 import Input from "../common/Input";
@@ -12,19 +13,55 @@ export default function CustomerForm() {
   const navigate = useNavigate();
   const { customerId } = useParams();
   const { user } = useAuth();
-  const { customers, addCustomer, updateCustomer } = useErp();
+  const erp = useErp();
   const isProduction = user?.mode === "supabase";
-  const existing = customers.find((customer) => customer.id === customerId);
-  const [name, setName] = useState(existing?.name ?? "");
-  const [email, setEmail] = useState(existing?.email ?? "");
-  const [phone, setPhone] = useState(existing?.phone ?? "");
-  const [taxNumber, setTaxNumber] = useState(existing?.taxNumber ?? "");
-  const [address, setAddress] = useState(existing?.address ?? "");
-  const [balance, setBalance] = useState(String(existing?.balance ?? 0));
-  const [status, setStatus] = useState<"active" | "inactive">(existing?.status ?? "active");
-  const [notes, setNotes] = useState(existing?.notes ?? "");
+  const localExisting = erp.customers.find((customer) => customer.id === customerId);
+  const [existing, setExisting] = useState<Customer | undefined>(isProduction ? undefined : localExisting);
+  const [name, setName] = useState(localExisting?.name ?? "");
+  const [email, setEmail] = useState(localExisting?.email ?? "");
+  const [phone, setPhone] = useState(localExisting?.phone ?? "");
+  const [taxNumber, setTaxNumber] = useState(localExisting?.taxNumber ?? "");
+  const [address, setAddress] = useState(localExisting?.address ?? "");
+  const [balance, setBalance] = useState(String(localExisting?.balance ?? 0));
+  const [status, setStatus] = useState<"active" | "inactive">(localExisting?.status ?? "active");
+  const [notes, setNotes] = useState(localExisting?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(Boolean(isProduction && customerId));
+
+  useEffect(() => {
+    if (!isProduction || !customerId) return;
+    let active = true;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const customer = await apiRequest<Customer | null>(`/erp/customers/${customerId}`);
+        if (!active) return;
+        if (!customer) {
+          setError("العميل غير موجود أو لا ينتمي إلى شركتك.");
+          return;
+        }
+        setExisting(customer);
+        setName(customer.name);
+        setEmail(customer.email);
+        setPhone(customer.phone);
+        setTaxNumber(customer.taxNumber);
+        setAddress(customer.address);
+        setBalance(String(customer.balance));
+        setStatus(customer.status);
+        setNotes(customer.notes);
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : "تعذر تحميل بيانات العميل.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => { active = false; };
+  }, [customerId, isProduction]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,15 +81,12 @@ export default function CustomerForm() {
       };
 
       if (isProduction) {
-        if (existing) {
-          await apiRequest(`/customers/${existing.id}`, { method: "PATCH", body: JSON.stringify(input) });
-        } else {
-          await apiRequest("/customers", { method: "POST", body: JSON.stringify(input) });
-        }
+        if (existing) await apiRequest(`/customers/${existing.id}`, { method: "PATCH", body: JSON.stringify(input) });
+        else await apiRequest("/customers", { method: "POST", body: JSON.stringify(input) });
       } else if (existing) {
-        updateCustomer(existing.id, input);
+        erp.updateCustomer(existing.id, input);
       } else {
-        addCustomer(input);
+        erp.addCustomer(input);
       }
 
       navigate(appPaths.customers, { replace: true });
@@ -61,6 +95,8 @@ export default function CustomerForm() {
       setSaving(false);
     }
   }
+
+  if (loading) return <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-xs text-slate-500">جارٍ تحميل بيانات العميل...</div>;
 
   return (
     <form onSubmit={handleSubmit}>
