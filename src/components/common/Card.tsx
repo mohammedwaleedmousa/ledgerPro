@@ -5,7 +5,7 @@ type Props = {
 
 export default function Card({ children, className = "" }: Props) {
   return (
-    <div className={`rounded-3xl border border-gray-100 bg-white p-6 shadow-sm ${className}`}>
+    <div className={`rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.02)] sm:p-5 ${className}`}>
       {children}
     </div>
   );

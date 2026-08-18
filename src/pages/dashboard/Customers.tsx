@@ -1,15 +1,18 @@
+import { useState } from "react";
 import CustomerHeader from "../../components/customers/CustomerHeader";
 import CustomerStats from "../../components/customers/CustomerStats";
 import CustomerTable from "../../components/customers/CustomerTable";
 
 export default function Customers() {
+  const [search, setSearch] = useState("");
+
   return (
-    <div className="space-y-6">
-      <CustomerHeader />
+    <div className="space-y-4">
+      <CustomerHeader search={search} onSearchChange={setSearch} />
 
       <CustomerStats />
 
-      <CustomerTable />
+      <CustomerTable search={search} />
     </div>
   );
 }
