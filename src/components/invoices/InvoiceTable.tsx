@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency, formatDate } from "../../lib/format";
 import { appPaths } from "../../routes/navigation";
-import type { InvoiceStatus } from "../../types/erp";
+import type { Invoice, InvoiceStatus } from "../../types/erp";
 import Table from "../common/Table";
 
 const statusLabels: Record<InvoiceStatus, string> = {
@@ -20,8 +20,15 @@ const statusStyles: Record<InvoiceStatus, string> = {
   overdue: "bg-red-50 text-red-700",
 };
 
-export default function InvoiceTable({ search }: { search: string }) {
-  const { invoices, updateInvoiceStatus } = useErp();
+type Props = {
+  search: string;
+  invoices?: Invoice[];
+  readOnlyStatus?: boolean;
+};
+
+export default function InvoiceTable({ search, invoices: suppliedInvoices, readOnlyStatus = false }: Props) {
+  const erp = useErp();
+  const invoices = suppliedInvoices ?? erp.invoices;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredInvoices = invoices.filter((invoice) => !normalizedSearch || invoice.number.toLowerCase().includes(normalizedSearch) || invoice.customerName.toLowerCase().includes(normalizedSearch));
 
@@ -44,12 +51,16 @@ export default function InvoiceTable({ search }: { search: string }) {
             <td className="p-4 font-mono text-[11px] font-bold text-blue-700">{invoice.number}</td>
             <td className="p-4 text-xs font-bold text-slate-700">{invoice.customerName}</td>
             <td className="p-4 text-[10px] text-slate-500">{formatDate(invoice.issueDate)}</td>
-            <td className="p-4 text-[10px] text-slate-500">{invoice.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
+            <td className="p-4 text-[10px] text-slate-500">{invoice.items.length > 0 ? invoice.items.reduce((sum, item) => sum + item.quantity, 0) : "—"}</td>
             <td className="p-4 text-xs font-extrabold text-slate-900">{formatCurrency(invoice.total)}</td>
             <td className="p-4">
-              <select aria-label={`حالة الفاتورة ${invoice.number}`} value={invoice.status} onChange={(event) => updateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)} className={`rounded-full border-0 px-2.5 py-1.5 text-[9px] font-bold outline-none ${statusStyles[invoice.status]}`}>
-                {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              {readOnlyStatus ? (
+                <span className={`inline-flex rounded-full px-2.5 py-1.5 text-[9px] font-bold ${statusStyles[invoice.status]}`}>{statusLabels[invoice.status]}</span>
+              ) : (
+                <select aria-label={`حالة الفاتورة ${invoice.number}`} value={invoice.status} onChange={(event) => erp.updateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)} className={`rounded-full border-0 px-2.5 py-1.5 text-[9px] font-bold outline-none ${statusStyles[invoice.status]}`}>
+                  {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              )}
             </td>
             <td className="p-4"><Link to={appPaths.invoiceDetails(invoice.id)} aria-label={`عرض ${invoice.number}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-blue-200 hover:text-blue-600"><Eye size={14} /></Link></td>
           </tr>
