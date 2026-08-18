@@ -16,12 +16,14 @@ import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { ProductsController } from './products/products.controller';
 import { ProductsService } from './products/products.service';
+import { PurchasesController } from './purchases/purchases.controller';
+import { PurchasesService } from './purchases/purchases.service';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { SuppliersService } from './suppliers/suppliers.service';
 
 @Module({
   imports: [],
-  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController],
-  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService],
+  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController],
+  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService],
 })
 export class AppModule {}
