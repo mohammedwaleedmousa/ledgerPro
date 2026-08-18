@@ -1,31 +1,77 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useErp } from "../../context/ErpContext";
 import { apiRequest } from "../../lib/api";
 import { appPaths } from "../../routes/navigation";
+import type { Category, Product } from "../../types/erp";
 import Button from "../common/Button";
 import Card from "../common/Card";
 import Input from "../common/Input";
 import ProductImageUpload from "./ProductImageUpload";
 
+type BootstrapResult = { categories: Category[] };
+
 export default function ProductForm() {
   const navigate = useNavigate();
   const { productId } = useParams();
   const { user } = useAuth();
-  const { products, categories, addProduct, updateProduct } = useErp();
+  const erp = useErp();
   const isProduction = user?.mode === "supabase";
-  const existing = products.find((product) => product.id === productId);
-  const [name, setName] = useState(existing?.name ?? "");
-  const [sku, setSku] = useState(existing?.sku ?? "");
-  const [categoryId, setCategoryId] = useState(existing?.categoryId ?? categories[0]?.id ?? "");
-  const [cost, setCost] = useState(String(existing?.cost ?? ""));
-  const [price, setPrice] = useState(String(existing?.price ?? ""));
-  const [stock, setStock] = useState(String(existing?.stock ?? ""));
-  const [lowStockThreshold, setLowStockThreshold] = useState(String(existing?.lowStockThreshold ?? 5));
-  const [description, setDescription] = useState(existing?.description ?? "");
+  const localExisting = erp.products.find((product) => product.id === productId);
+  const [existing, setExisting] = useState<Product | undefined>(isProduction ? undefined : localExisting);
+  const [categories, setCategories] = useState<Category[]>(isProduction ? [] : erp.categories);
+  const [name, setName] = useState(localExisting?.name ?? "");
+  const [sku, setSku] = useState(localExisting?.sku ?? "");
+  const [categoryId, setCategoryId] = useState(localExisting?.categoryId ?? erp.categories[0]?.id ?? "");
+  const [cost, setCost] = useState(String(localExisting?.cost ?? ""));
+  const [price, setPrice] = useState(String(localExisting?.price ?? ""));
+  const [stock, setStock] = useState(String(localExisting?.stock ?? ""));
+  const [lowStockThreshold, setLowStockThreshold] = useState(String(localExisting?.lowStockThreshold ?? 5));
+  const [description, setDescription] = useState(localExisting?.description ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isProduction);
+
+  useEffect(() => {
+    if (!isProduction) return;
+    let active = true;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [bootstrap, product] = await Promise.all([
+          apiRequest<BootstrapResult>("/erp/bootstrap"),
+          productId ? apiRequest<Product | null>(`/erp/products/${productId}`) : Promise.resolve(null),
+        ]);
+        if (!active) return;
+        setCategories(bootstrap.categories);
+        if (product) {
+          setExisting(product);
+          setName(product.name);
+          setSku(product.sku);
+          setCategoryId(product.categoryId);
+          setCost(String(product.cost));
+          setPrice(String(product.price));
+          setStock(String(product.stock));
+          setLowStockThreshold(String(product.lowStockThreshold));
+          setDescription(product.description);
+        } else if (!productId) {
+          setCategoryId(bootstrap.categories[0]?.id ?? "");
+        } else {
+          setError("المنتج غير موجود أو لا ينتمي إلى شركتك.");
+        }
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : "تعذر تحميل بيانات المنتج.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => { active = false; };
+  }, [isProduction, productId]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,15 +92,12 @@ export default function ProductForm() {
       };
 
       if (isProduction) {
-        if (existing) {
-          await apiRequest(`/products/${existing.id}`, { method: "PATCH", body: JSON.stringify(input) });
-        } else {
-          await apiRequest("/products", { method: "POST", body: JSON.stringify(input) });
-        }
+        if (existing) await apiRequest(`/products/${existing.id}`, { method: "PATCH", body: JSON.stringify(input) });
+        else await apiRequest("/products", { method: "POST", body: JSON.stringify(input) });
       } else if (existing) {
-        updateProduct(existing.id, input);
+        erp.updateProduct(existing.id, input);
       } else {
-        addProduct(input);
+        erp.addProduct(input);
       }
 
       navigate(appPaths.products, { replace: true });
@@ -63,6 +106,8 @@ export default function ProductForm() {
       setSaving(false);
     }
   }
+
+  if (loading) return <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-xs text-slate-500">جارٍ تحميل بيانات المنتج...</div>;
 
   return (
     <form className="grid grid-cols-1 gap-4 xl:grid-cols-3" onSubmit={handleSubmit}>
