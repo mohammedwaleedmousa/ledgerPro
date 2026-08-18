@@ -28,10 +28,12 @@ import { ReturnsController } from './returns/returns.controller';
 import { ReturnsService } from './returns/returns.service';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { SuppliersService } from './suppliers/suppliers.service';
+import { SystemController } from './system/system.controller';
+import { SystemService } from './system/system.service';
 
 @Module({
   imports: [],
-  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, QuotationsController, ReturnsController, ExpensesController, JournalController],
-  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, QuotationsService, ReturnsService, ExpensesService, JournalService],
+  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, QuotationsController, ReturnsController, ExpensesController, JournalController, SystemController],
+  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, QuotationsService, ReturnsService, ExpensesService, JournalService, SystemService],
 })
 export class AppModule {}
