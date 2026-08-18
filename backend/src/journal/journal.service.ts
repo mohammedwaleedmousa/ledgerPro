@@ -48,19 +48,28 @@ export class JournalService {
         }
       }
     }
-    return entries.map((entry) => ({
-      id: entry.id,
-      number: entry.journal_number,
-      date: entry.entry_date,
-      description: entry.description,
-      status: entry.status,
-      totalDebit: Number(entry.total_debit),
-      totalCredit: Number(entry.total_credit),
-      reversalOfId: entry.reversal_of_id ?? undefined,
-      isManual: entry.is_manual,
-      createdAt: entry.created_at,
-      lines: (linesByEntry.get(entry.id) ?? []).map((line) => ({ id: line.id, accountId: line.account_id, accountName: accountNames.get(line.account_id) ?? 'حساب', debit: Number(line.debit), credit: Number(line.credit) })),
-    }));
+    return entries.map((entry) => ({ id: entry.id, number: entry.journal_number, date: entry.entry_date, description: entry.description, status: entry.status, totalDebit: Number(entry.total_debit), totalCredit: Number(entry.total_credit), reversalOfId: entry.reversal_of_id ?? undefined, isManual: entry.is_manual, createdAt: entry.created_at, lines: (linesByEntry.get(entry.id) ?? []).map((line) => ({ id: line.id, accountId: line.account_id, accountName: accountNames.get(line.account_id) ?? 'حساب', debit: Number(line.debit), credit: Number(line.credit) })) }));
+  }
+
+  async periodLock(user: AuthenticatedUser) {
+    this.assertConfigured();
+    const params = new URLSearchParams({ company_id: `eq.${user.companyId}`, select: 'locked_through,updated_at', limit: '1' });
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/accounting_period_locks?${params.toString()}`, { headers: this.headers() });
+    if (!response.ok) throw new BadGatewayException(await this.errorMessage(response, 'Unable to load accounting period lock.'));
+    const rows = (await response.json()) as Array<{ locked_through: string | null; updated_at: string }>;
+    return { lockedThrough: rows[0]?.locked_through ?? null, updatedAt: rows[0]?.updated_at ?? null };
+  }
+
+  async setPeriodLock(user: AuthenticatedUser, lockedThrough: string | null) {
+    this.assertConfigured();
+    if (lockedThrough !== null && !/^\d{4}-\d{2}-\d{2}$/.test(lockedThrough)) throw new BadRequestException('lockedThrough must be YYYY-MM-DD or null.');
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/accounting_period_locks?on_conflict=company_id`, {
+      method: 'POST',
+      headers: this.headers({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' }),
+      body: JSON.stringify({ company_id: user.companyId, locked_through: lockedThrough, updated_by: user.id, updated_at: new Date().toISOString() }),
+    });
+    if (!response.ok) throw new BadRequestException(await this.errorMessage(response, 'Unable to update accounting period lock.'));
+    return this.periodLock(user);
   }
 
   async post(user: AuthenticatedUser, input: ManualJournalInput) {
