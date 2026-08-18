@@ -14,6 +14,8 @@ import { InventoryController } from './inventory/inventory.controller';
 import { InventoryService } from './inventory/inventory.service';
 import { InvoicesController } from './invoices/invoices.controller';
 import { InvoicesService } from './invoices/invoices.service';
+import { JournalController } from './journal/journal.controller';
+import { JournalService } from './journal/journal.service';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { ProductsController } from './products/products.controller';
@@ -27,7 +29,7 @@ import { SuppliersService } from './suppliers/suppliers.service';
 
 @Module({
   imports: [],
-  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, ReturnsController, ExpensesController],
-  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, ReturnsService, ExpensesService],
+  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, ReturnsController, ExpensesController, JournalController],
+  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, ReturnsService, ExpensesService, JournalService],
 })
 export class AppModule {}
