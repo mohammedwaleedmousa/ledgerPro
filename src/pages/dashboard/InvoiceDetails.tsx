@@ -1,22 +1,62 @@
 import { ArrowRight, Building2, Download, Printer } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import PageHeader from "../../components/common/PageHeader";
+import { useAuth } from "../../context/AuthContext";
 import { useCompany } from "../../context/CompanyContext";
 import { useErp } from "../../context/ErpContext";
+import { apiRequest } from "../../lib/api";
 import { formatCurrency, formatDate } from "../../lib/format";
 import { appPaths } from "../../routes/navigation";
-import type { InvoiceStatus, PaymentMethod } from "../../types/erp";
+import type { Invoice, InvoiceStatus, PaymentMethod } from "../../types/erp";
 
 const statusLabels: Record<InvoiceStatus, string> = { draft: "مسودة", sent: "مرسلة", paid: "مدفوعة", overdue: "متأخرة" };
 const methodLabels: Record<PaymentMethod, string> = { cash: "نقدي", bank: "تحويل بنكي", card: "بطاقة", credit: "آجل" };
 
 export default function InvoiceDetails() {
   const { invoiceId } = useParams();
+  const { user } = useAuth();
   const { invoices } = useErp();
   const { company } = useCompany();
-  const invoice = invoices.find((item) => item.id === invoiceId);
+  const isProductionMode = user?.mode === "supabase";
+  const [productionInvoice, setProductionInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(isProductionMode);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isProductionMode || !invoiceId) return;
+    let active = true;
+
+    async function loadInvoice() {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await apiRequest<Invoice | null>(`/erp/invoices/${encodeURIComponent(invoiceId)}`);
+        if (active) setProductionInvoice(result);
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : "تعذر تحميل الفاتورة من الخادم.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadInvoice();
+    return () => {
+      active = false;
+    };
+  }, [invoiceId, isProductionMode]);
+
+  const invoice = isProductionMode ? productionInvoice : invoices.find((item) => item.id === invoiceId) ?? null;
+
+  if (loading) {
+    return <div className="flex min-h-[55vh] items-center justify-center rounded-[18px] border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">جارٍ تحميل الفاتورة من الخادم...</div>;
+  }
+
+  if (error) {
+    return <div className="flex min-h-[55vh] flex-col items-center justify-center rounded-[18px] border border-rose-200 bg-white p-8 text-center"><p className="text-lg font-black text-slate-900">تعذر تحميل الفاتورة</p><p className="mt-2 text-xs text-rose-600">{error}</p><Link to={appPaths.invoices} className="mt-5 rounded-[10px] bg-blue-600 px-4 py-2.5 text-xs font-bold text-white">العودة إلى الفواتير</Link></div>;
+  }
 
   if (!invoice) {
     return <div className="flex min-h-[55vh] flex-col items-center justify-center rounded-[18px] border border-slate-200 bg-white p-8 text-center"><p className="text-lg font-black text-slate-900">الفاتورة غير موجودة</p><p className="mt-2 text-xs text-slate-500">ربما تم حذفها أو أن الرابط غير صحيح.</p><Link to={appPaths.invoices} className="mt-5 rounded-[10px] bg-blue-600 px-4 py-2.5 text-xs font-bold text-white">العودة إلى الفواتير</Link></div>;
@@ -25,6 +65,8 @@ export default function InvoiceDetails() {
   return (
     <div className="space-y-4">
       <div className="print:hidden"><PageHeader title={`الفاتورة ${invoice.number}`} description="معاينة تفاصيل الفاتورة وتجهيزها للطباعة أو الحفظ PDF." eyebrow="المبيعات" actions={<><Link to={appPaths.invoices} className="inline-flex min-h-10 items-center gap-2 rounded-[10px] border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><ArrowRight size={14} />رجوع</Link><Button variant="secondary" onClick={() => window.print()}><Printer size={15} />طباعة / PDF</Button><Button onClick={() => window.print()}><Download size={15} />تنزيل</Button></>} /></div>
+
+      {isProductionMode && <div className="print:hidden rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-[11px] font-medium text-emerald-800">هذه الفاتورة محمّلة مباشرة من قاعدة بيانات الشركة.</div>}
 
       <article className="invoice-print mx-auto max-w-5xl overflow-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02)]">
         <div className="border-b border-slate-100 p-6 sm:p-8">

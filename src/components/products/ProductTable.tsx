@@ -4,18 +4,25 @@ import { useNavigate } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency, formatNumber } from "../../lib/format";
 import { appPaths } from "../../routes/navigation";
+import type { Category, Product } from "../../types/erp";
 import Badge from "../common/Badge";
 import Table from "../common/Table";
 
 type Props = {
   search: string;
   categoryId: string;
+  products?: Product[];
+  categories?: Category[];
+  onDeactivate?: (product: Product) => Promise<void>;
 };
 
-export default function ProductTable({ search, categoryId }: Props) {
+export default function ProductTable({ search, categoryId, products: suppliedProducts, categories: suppliedCategories, onDeactivate }: Props) {
   const navigate = useNavigate();
-  const { products, categories, removeProduct } = useErp();
+  const erp = useErp();
+  const products = suppliedProducts ?? erp.products;
+  const categories = suppliedCategories ?? erp.categories;
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const normalizedSearch = search.trim().toLowerCase();
   const filteredProducts = useMemo(() => products.filter((product) => {
@@ -27,13 +34,17 @@ export default function ProductTable({ search, categoryId }: Props) {
   const currentPage = Math.min(page, pageCount);
   const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  function handleDelete(id: string, name: string) {
-    if (!window.confirm(`هل تريد حذف المنتج «${name}»؟`)) return;
+  async function handleDelete(product: Product) {
+    if (!window.confirm(`هل تريد تعطيل المنتج «${product.name}»؟`)) return;
+    setBusyId(product.id);
+    setError(null);
     try {
-      removeProduct(id);
-      setError(null);
+      if (onDeactivate) await onDeactivate(product);
+      else erp.removeProduct(product.id);
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "تعذر حذف المنتج.");
+      setError(deleteError instanceof Error ? deleteError.message : "تعذر تعطيل المنتج.");
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -64,7 +75,7 @@ export default function ProductTable({ search, categoryId }: Props) {
               <td className="p-4">
                 <div className="flex items-center gap-2">
                   <button type="button" aria-label={`تعديل ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editProduct(product.id))}><Pencil size={13} /></button>
-                  <button type="button" aria-label={`حذف ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(product.id, product.name)}><Trash2 size={13} /></button>
+                  <button type="button" disabled={busyId === product.id} aria-label={`تعطيل ${product.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50 disabled:opacity-40" onClick={() => void handleDelete(product)}><Trash2 size={13} /></button>
                 </div>
               </td>
             </tr>

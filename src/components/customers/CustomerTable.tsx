@@ -4,27 +4,38 @@ import { useNavigate } from "react-router-dom";
 import { useErp } from "../../context/ErpContext";
 import { formatCurrency } from "../../lib/format";
 import { appPaths } from "../../routes/navigation";
+import type { Customer, Invoice } from "../../types/erp";
 import Badge from "../common/Badge";
 import Table from "../common/Table";
 
 type Props = {
   search: string;
+  customers?: Customer[];
+  invoices?: Invoice[];
+  onDeactivate?: (customer: Customer) => Promise<void>;
 };
 
-export default function CustomerTable({ search }: Props) {
+export default function CustomerTable({ search, customers: suppliedCustomers, invoices: suppliedInvoices, onDeactivate }: Props) {
   const navigate = useNavigate();
-  const { customers, invoices, removeCustomer } = useErp();
+  const erp = useErp();
+  const customers = suppliedCustomers ?? erp.customers;
+  const invoices = suppliedInvoices ?? erp.invoices;
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const normalizedSearch = search.trim().toLowerCase();
   const filteredCustomers = customers.filter((customer) => !normalizedSearch || [customer.name, customer.phone, customer.email].some((value) => value.toLowerCase().includes(normalizedSearch)));
 
-  function handleDelete(id: string, name: string) {
-    if (!window.confirm(`هل تريد حذف العميل «${name}»؟`)) return;
+  async function handleDelete(customer: Customer) {
+    if (!window.confirm(`هل تريد تعطيل العميل «${customer.name}»؟`)) return;
+    setBusyId(customer.id);
+    setError(null);
     try {
-      removeCustomer(id);
-      setError(null);
+      if (onDeactivate) await onDeactivate(customer);
+      else erp.removeCustomer(customer.id);
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "تعذر حذف العميل.");
+      setError(deleteError instanceof Error ? deleteError.message : "تعذر تعطيل العميل.");
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -53,7 +64,7 @@ export default function CustomerTable({ search }: Props) {
               <td className="p-4"><div className="flex items-center gap-2">
                 <button type="button" aria-label={`عرض ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600" onClick={() => navigate(appPaths.customerDetails(customer.id))}><Eye size={13} /></button>
                 <button type="button" aria-label={`تعديل ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-blue-600 hover:bg-blue-50" onClick={() => navigate(appPaths.editCustomer(customer.id))}><Pencil size={13} /></button>
-                <button type="button" aria-label={`حذف ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(customer.id, customer.name)}><Trash2 size={13} /></button>
+                <button type="button" disabled={busyId === customer.id} aria-label={`تعطيل ${customer.name}`} className="rounded-lg border border-slate-200 p-1.5 text-rose-500 hover:bg-rose-50 disabled:opacity-40" onClick={() => void handleDelete(customer)}><Trash2 size={13} /></button>
               </div></td>
             </tr>
           ))}

@@ -1,21 +1,93 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProductHeader from "../../components/products/ProductHeader";
 import ProductStats from "../../components/products/ProductStats";
 import ProductTable from "../../components/products/ProductTable";
+import { useAuth } from "../../context/AuthContext";
 import { useErp } from "../../context/ErpContext";
+import { apiRequest } from "../../lib/api";
+import type { Category, Product } from "../../types/erp";
+
+type PageResult<T> = {
+  items: T[];
+  page: number;
+  limit: number;
+  total: number;
+};
+
+type BootstrapResult = {
+  categories: Category[];
+};
 
 export default function Products() {
-  const { categories } = useErp();
+  const { user } = useAuth();
+  const erp = useErp();
+  const isProductionMode = user?.mode === "supabase";
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [productionProducts, setProductionProducts] = useState<Product[]>([]);
+  const [productionCategories, setProductionCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(isProductionMode);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadProductionProducts() {
+    const [bootstrap, products] = await Promise.all([
+      apiRequest<BootstrapResult>("/erp/bootstrap"),
+      apiRequest<PageResult<Product>>("/erp/products?limit=100&page=1"),
+    ]);
+    setProductionCategories(bootstrap.categories);
+    setProductionProducts(products.items);
+  }
+
+  useEffect(() => {
+    if (!isProductionMode) return;
+    let active = true;
+
+    async function loadProducts() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [bootstrap, products] = await Promise.all([
+          apiRequest<BootstrapResult>("/erp/bootstrap"),
+          apiRequest<PageResult<Product>>("/erp/products?limit=100&page=1"),
+        ]);
+        if (!active) return;
+        setProductionCategories(bootstrap.categories);
+        setProductionProducts(products.items);
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : "تعذر تحميل المنتجات من الخادم.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadProducts();
+    return () => {
+      active = false;
+    };
+  }, [isProductionMode]);
+
+  async function handleDeactivate(product: Product) {
+    await apiRequest(`/products/${product.id}`, { method: "DELETE" });
+    await loadProductionProducts();
+  }
+
+  const categories = isProductionMode ? productionCategories : erp.categories;
 
   return (
     <div className="space-y-4">
       <ProductHeader search={search} categoryId={categoryId} categories={categories} onSearchChange={setSearch} onCategoryChange={setCategoryId} />
 
-      <ProductStats />
+      {isProductionMode && <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-[11px] font-medium text-emerald-800">المنتجات والمخزون المعروضان هنا من قاعدة بيانات الشركة. الإضافة والتعديل والتعطيل تمر عبر الـBackend الإنتاجي.</div>}
+      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-[11px] text-rose-700">{error}</div>}
 
-      <ProductTable search={search} categoryId={categoryId} />
+      {loading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-xs text-slate-500">جارٍ تحميل المنتجات من الخادم...</div>
+      ) : (
+        <>
+          <ProductStats products={isProductionMode ? productionProducts : undefined} />
+          <ProductTable search={search} categoryId={categoryId} products={isProductionMode ? productionProducts : undefined} categories={isProductionMode ? productionCategories : undefined} onDeactivate={isProductionMode ? handleDeactivate : undefined} />
+        </>
+      )}
     </div>
   );
 }

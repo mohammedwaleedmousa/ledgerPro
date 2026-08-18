@@ -1,11 +1,13 @@
 import { TriangleAlert } from "lucide-react";
 import { useErp } from "../../context/ErpContext";
 import { formatNumber } from "../../lib/format";
+import type { Product } from "../../types/erp";
 import Badge from "../common/Badge";
 import Card from "../common/Card";
 
-export default function StockAlert() {
-  const { products } = useErp();
+export default function StockAlert({ products: suppliedProducts }: { products?: Product[] }) {
+  const erp = useErp();
+  const products = suppliedProducts ?? erp.products;
   const lowStockProducts = products.filter((product) => product.stock <= product.lowStockThreshold).sort((a, b) => a.stock - b.stock);
 
   return (

@@ -208,10 +208,12 @@ export type JournalEntry = {
   number: string;
   date: string;
   description: string;
-  status: "posted";
+  status: "posted" | "reversed";
   lines: JournalLine[];
   totalDebit: number;
   totalCredit: number;
+  isManual?: boolean;
+  reversalOfId?: string;
   createdAt: string;
 };
 
