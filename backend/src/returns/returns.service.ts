@@ -7,7 +7,6 @@ type ReturnRow = { id: string; return_number: string; invoice_id: string; custom
 export class ReturnsService {
   private readonly supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
   private readonly serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   private assertConfigured() { if (!this.supabaseUrl || !this.serviceKey) throw new ServiceUnavailableException('Production database is not configured.'); }
   private headers(extra: Record<string, string> = {}) { const headers: Record<string, string> = { apikey: this.serviceKey!, Accept: 'application/json', ...extra }; if (this.serviceKey?.startsWith('eyJ')) headers.Authorization = `Bearer ${this.serviceKey}`; return headers; }
   private async errorMessage(response: Response, fallback: string) { const raw = await response.text(); try { const parsed = JSON.parse(raw) as { message?: string; details?: string }; return parsed.message ?? parsed.details ?? fallback; } catch { return raw || fallback; } }
@@ -35,11 +34,11 @@ export class ReturnsService {
     return rows.map((row) => ({ id: row.id, number: row.return_number, invoiceId: row.invoice_id, invoiceNumber: invoiceNumbers.get(row.invoice_id) ?? '', customerId: row.customer_id, customerName: customerNames.get(row.customer_id) ?? 'عميل', date: row.return_date, reason: row.reason, amount: Number(row.total), status: row.status, createdAt: row.created_at }));
   }
 
-  async post(user: AuthenticatedUser, invoiceId: string, reason: string) {
+  async post(user: AuthenticatedUser, invoiceId: string, reason: string, requestKey: string) {
     this.assertConfigured();
     if (!invoiceId) throw new BadRequestException('invoiceId is required.');
     if (!reason?.trim()) throw new BadRequestException('Return reason is required.');
-    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_sales_return`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_invoice_id: invoiceId, p_reason: reason.trim() }) });
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_sales_return_idempotent`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_invoice_id: invoiceId, p_reason: reason.trim(), p_request_key: requestKey }) });
     if (!response.ok) throw new BadRequestException(await this.errorMessage(response, 'Unable to post sales return.'));
     return response.json();
   }
