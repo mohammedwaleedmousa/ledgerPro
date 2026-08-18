@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
+import { idempotencyKey } from '../common/idempotency';
 import { Roles, RolesGuard } from '../auth/roles';
 import { PaymentsService } from './payments.service';
 import type { PaymentWriteInput } from './payments.types';
@@ -22,6 +23,6 @@ export class PaymentsController {
   @Post()
   @Roles('owner', 'admin', 'accountant', 'sales')
   post(@Req() request: AuthenticatedRequest, @Body() input: PaymentWriteInput) {
-    return this.paymentsService.post(request.user, input);
+    return this.paymentsService.post(request.user, input, idempotencyKey(request));
   }
 }
