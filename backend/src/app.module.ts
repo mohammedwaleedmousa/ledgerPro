@@ -22,6 +22,8 @@ import { ProductsController } from './products/products.controller';
 import { ProductsService } from './products/products.service';
 import { PurchasesController } from './purchases/purchases.controller';
 import { PurchasesService } from './purchases/purchases.service';
+import { QuotationsController } from './quotations/quotations.controller';
+import { QuotationsService } from './quotations/quotations.service';
 import { ReturnsController } from './returns/returns.controller';
 import { ReturnsService } from './returns/returns.service';
 import { SuppliersController } from './suppliers/suppliers.controller';
@@ -29,7 +31,7 @@ import { SuppliersService } from './suppliers/suppliers.service';
 
 @Module({
   imports: [],
-  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, ReturnsController, ExpensesController, JournalController],
-  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, ReturnsService, ExpensesService, JournalService],
+  controllers: [AppController, ErpController, InvoicesController, ProductsController, CustomersController, InventoryController, PaymentsController, SuppliersController, PurchasesController, QuotationsController, ReturnsController, ExpensesController, JournalController],
+  providers: [AppService, AuthService, AuthGuard, RolesGuard, ErpService, InvoicesService, ProductsService, CustomersService, InventoryService, PaymentsService, SuppliersService, PurchasesService, QuotationsService, ReturnsService, ExpensesService, JournalService],
 })
 export class AppModule {}
