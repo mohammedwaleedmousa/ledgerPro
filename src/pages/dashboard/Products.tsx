@@ -29,6 +29,15 @@ export default function Products() {
   const [loading, setLoading] = useState(isProductionMode);
   const [error, setError] = useState<string | null>(null);
 
+  async function loadProductionProducts() {
+    const [bootstrap, products] = await Promise.all([
+      apiRequest<BootstrapResult>("/erp/bootstrap"),
+      apiRequest<PageResult<Product>>("/erp/products?limit=100&page=1"),
+    ]);
+    setProductionCategories(bootstrap.categories);
+    setProductionProducts(products.items);
+  }
+
   useEffect(() => {
     if (!isProductionMode) return;
     let active = true;
@@ -57,13 +66,18 @@ export default function Products() {
     };
   }, [isProductionMode]);
 
+  async function handleDeactivate(product: Product) {
+    await apiRequest(`/products/${product.id}`, { method: "DELETE" });
+    await loadProductionProducts();
+  }
+
   const categories = isProductionMode ? productionCategories : erp.categories;
 
   return (
     <div className="space-y-4">
       <ProductHeader search={search} categoryId={categoryId} categories={categories} onSearchChange={setSearch} onCategoryChange={setCategoryId} />
 
-      {isProductionMode && <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-[11px] font-medium text-emerald-800">المنتجات والمخزون المعروضان هنا محمّلان من قاعدة بيانات الشركة. التعديل والحذف المحليان معطلان حتى اكتمال CRUD الخادم.</div>}
+      {isProductionMode && <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-[11px] font-medium text-emerald-800">المنتجات والمخزون المعروضان هنا من قاعدة بيانات الشركة. الإضافة والتعديل والتعطيل تمر عبر الـBackend الإنتاجي.</div>}
       {error && <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-[11px] text-rose-700">{error}</div>}
 
       {loading ? (
@@ -71,7 +85,7 @@ export default function Products() {
       ) : (
         <>
           <ProductStats products={isProductionMode ? productionProducts : undefined} />
-          <ProductTable search={search} categoryId={categoryId} products={isProductionMode ? productionProducts : undefined} categories={isProductionMode ? productionCategories : undefined} readOnlyActions={isProductionMode} />
+          <ProductTable search={search} categoryId={categoryId} products={isProductionMode ? productionProducts : undefined} categories={isProductionMode ? productionCategories : undefined} onDeactivate={isProductionMode ? handleDeactivate : undefined} />
         </>
       )}
     </div>
