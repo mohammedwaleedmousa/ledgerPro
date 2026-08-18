@@ -5,12 +5,16 @@ import type { ProductMutationResult, ProductWriteInput } from './products.types'
 @Injectable()
 export class ProductsService {
   private readonly supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
-  private readonly serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  private readonly serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   private assertConfigured() {
-    if (!this.supabaseUrl || !this.serviceRoleKey) {
-      throw new ServiceUnavailableException('Production database is not configured.');
-    }
+    if (!this.supabaseUrl || !this.serviceKey) throw new ServiceUnavailableException('Production database is not configured.');
+  }
+
+  private headers(extra: Record<string, string> = {}) {
+    const headers: Record<string, string> = { apikey: this.serviceKey!, Accept: 'application/json', ...extra };
+    if (this.serviceKey?.startsWith('eyJ')) headers.Authorization = `Bearer ${this.serviceKey}`;
+    return headers;
   }
 
   private validate(input: ProductWriteInput, creating: boolean) {
@@ -37,28 +41,11 @@ export class ProductsService {
   async create(user: AuthenticatedUser, input: ProductWriteInput): Promise<ProductMutationResult> {
     this.assertConfigured();
     this.validate(input, true);
-
     const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/create_product`, {
       method: 'POST',
-      headers: {
-        apikey: this.serviceRoleKey!,
-        Authorization: `Bearer ${this.serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        p_actor_id: user.id,
-        p_name: input.name.trim(),
-        p_sku: input.sku.trim(),
-        p_category_id: input.categoryId,
-        p_cost: input.cost,
-        p_price: input.price,
-        p_initial_stock: input.stock ?? 0,
-        p_low_stock_threshold: input.lowStockThreshold,
-        p_description: input.description?.trim() ?? '',
-      }),
+      headers: this.headers({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ p_actor_id: user.id, p_name: input.name.trim(), p_sku: input.sku.trim(), p_category_id: input.categoryId, p_cost: input.cost, p_price: input.price, p_initial_stock: input.stock ?? 0, p_low_stock_threshold: input.lowStockThreshold, p_description: input.description?.trim() ?? '' }),
     });
-
     if (!response.ok) throw new BadRequestException(await this.parseError(response, 'Unable to create product.'));
     const result = (await response.json()) as { product_id: string };
     return { productId: result.product_id };
@@ -67,32 +54,12 @@ export class ProductsService {
   async update(user: AuthenticatedUser, productId: string, input: ProductWriteInput): Promise<ProductMutationResult> {
     this.assertConfigured();
     this.validate(input, false);
-
-    const params = new URLSearchParams({
-      company_id: `eq.${user.companyId}`,
-      id: `eq.${productId}`,
-    });
+    const params = new URLSearchParams({ company_id: `eq.${user.companyId}`, id: `eq.${productId}` });
     const response = await fetch(`${this.supabaseUrl}/rest/v1/products?${params.toString()}`, {
       method: 'PATCH',
-      headers: {
-        apikey: this.serviceRoleKey!,
-        Authorization: `Bearer ${this.serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({
-        category_id: input.categoryId,
-        name: input.name.trim(),
-        sku: input.sku.trim(),
-        description: input.description?.trim() ?? '',
-        cost: input.cost,
-        price: input.price,
-        low_stock_threshold: input.lowStockThreshold,
-        is_active: input.isActive ?? true,
-      }),
+      headers: this.headers({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+      body: JSON.stringify({ category_id: input.categoryId, name: input.name.trim(), sku: input.sku.trim(), description: input.description?.trim() ?? '', cost: input.cost, price: input.price, low_stock_threshold: input.lowStockThreshold, is_active: input.isActive ?? true }),
     });
-
     if (!response.ok) throw new BadRequestException(await this.parseError(response, 'Unable to update product.'));
     const rows = (await response.json()) as Array<{ id: string }>;
     if (!rows[0]) throw new NotFoundException('Product not found.');
@@ -102,18 +69,7 @@ export class ProductsService {
   async deactivate(user: AuthenticatedUser, productId: string): Promise<ProductMutationResult> {
     this.assertConfigured();
     const params = new URLSearchParams({ company_id: `eq.${user.companyId}`, id: `eq.${productId}` });
-    const response = await fetch(`${this.supabaseUrl}/rest/v1/products?${params.toString()}`, {
-      method: 'PATCH',
-      headers: {
-        apikey: this.serviceRoleKey!,
-        Authorization: `Bearer ${this.serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({ is_active: false }),
-    });
-
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/products?${params.toString()}`, { method: 'PATCH', headers: this.headers({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify({ is_active: false }) });
     if (!response.ok) throw new BadGatewayException(await this.parseError(response, 'Unable to deactivate product.'));
     const rows = (await response.json()) as Array<{ id: string }>;
     if (!rows[0]) throw new NotFoundException('Product not found.');
