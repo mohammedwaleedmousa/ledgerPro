@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
+import { idempotencyKey } from '../common/idempotency';
 import { Roles, RolesGuard } from '../auth/roles';
 import { ExpensesService } from './expenses.service';
 
@@ -16,6 +17,6 @@ export class ExpensesController {
   @Post()
   @Roles('owner', 'admin', 'accountant')
   post(@Req() request: AuthenticatedRequest, @Body() body: { category: string; description: string; amount: number; date: string; status: 'paid' | 'pending'; supplierId?: string; paymentMethod?: 'cash' | 'bank' | 'card' }) {
-    return this.expensesService.post(request.user, body);
+    return this.expensesService.post(request.user, body, idempotencyKey(request));
   }
 }
