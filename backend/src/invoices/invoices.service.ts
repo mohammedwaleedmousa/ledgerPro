@@ -33,10 +33,10 @@ export class InvoicesService {
     }
   }
 
-  async postInvoice(user: AuthenticatedUser, input: PostInvoiceInput): Promise<PostedInvoiceResult> {
+  async postInvoice(user: AuthenticatedUser, input: PostInvoiceInput, requestKey: string): Promise<PostedInvoiceResult> {
     this.assertConfigured();
     this.validate(input);
-    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_invoice`, {
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_invoice_idempotent`, {
       method: 'POST',
       headers: this.headers({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
@@ -47,6 +47,7 @@ export class InvoicesService {
         p_tax_rate: input.taxRate,
         p_notes: input.notes?.trim() ?? '',
         p_items: input.items.map((item) => ({ product_id: item.productId, quantity: item.quantity, unit_price: item.unitPrice })),
+        p_request_key: requestKey,
       }),
     });
     const raw = await response.text();
