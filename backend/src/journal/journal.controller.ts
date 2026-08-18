@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
+import { idempotencyKey } from '../common/idempotency';
 import { Roles, RolesGuard } from '../auth/roles';
 import { JournalService } from './journal.service';
 import type { ManualJournalInput } from './journal.types';
@@ -33,12 +34,12 @@ export class JournalController {
   @Post()
   @Roles('owner', 'admin', 'accountant')
   post(@Req() request: AuthenticatedRequest, @Body() body: ManualJournalInput) {
-    return this.journalService.post(request.user, body);
+    return this.journalService.post(request.user, body, idempotencyKey(request));
   }
 
   @Post(':journalEntryId/reverse')
   @Roles('owner', 'admin', 'accountant')
   reverse(@Req() request: AuthenticatedRequest, @Param('journalEntryId') journalEntryId: string, @Body() body: { reason: string }) {
-    return this.journalService.reverse(request.user, journalEntryId, body.reason);
+    return this.journalService.reverse(request.user, journalEntryId, body.reason, idempotencyKey(request));
   }
 }
