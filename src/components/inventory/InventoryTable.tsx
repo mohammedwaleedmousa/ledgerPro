@@ -1,6 +1,6 @@
 import { useErp } from "../../context/ErpContext";
 import { formatDate, formatNumber } from "../../lib/format";
-import type { StockMovementType } from "../../types/erp";
+import type { StockMovement, StockMovementType } from "../../types/erp";
 import Badge from "../common/Badge";
 import Table from "../common/Table";
 
@@ -12,10 +12,11 @@ const movementLabels: Record<StockMovementType, string> = {
   return: "مرتجع",
 };
 
-export default function InventoryTable({ search }: { search: string }) {
+export default function InventoryTable({ search, movements: suppliedMovements }: { search: string; movements?: StockMovement[] }) {
   const { stockMovements } = useErp();
+  const source = suppliedMovements ?? stockMovements;
   const normalizedSearch = search.trim().toLowerCase();
-  const movements = stockMovements.filter((movement) => !normalizedSearch || movement.productName.toLowerCase().includes(normalizedSearch) || movement.reference.toLowerCase().includes(normalizedSearch));
+  const movements = source.filter((movement) => !normalizedSearch || movement.productName.toLowerCase().includes(normalizedSearch) || movement.reference.toLowerCase().includes(normalizedSearch));
 
   return (
     <Table minWidth="700px">
