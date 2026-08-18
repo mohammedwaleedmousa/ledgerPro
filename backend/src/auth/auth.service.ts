@@ -16,10 +16,9 @@ type ProfileRow = {
 export class AuthService {
   private readonly supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
   private readonly publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
-  private readonly serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   private assertConfigured() {
-    if (!this.supabaseUrl || !this.publishableKey || !this.serviceRoleKey) {
+    if (!this.supabaseUrl || !this.publishableKey) {
       throw new UnauthorizedException('Backend authentication is not configured.');
     }
   }
@@ -45,8 +44,8 @@ export class AuthService {
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=company_id,full_name,role&limit=1`,
       {
         headers: {
-          apikey: this.serviceRoleKey!,
-          Authorization: `Bearer ${this.serviceRoleKey}`,
+          apikey: this.publishableKey!,
+          Authorization: `Bearer ${accessToken}`,
           Accept: 'application/json',
         },
       },
