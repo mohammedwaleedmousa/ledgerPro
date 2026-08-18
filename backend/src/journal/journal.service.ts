@@ -72,20 +72,20 @@ export class JournalService {
     return this.periodLock(user);
   }
 
-  async post(user: AuthenticatedUser, input: ManualJournalInput) {
+  async post(user: AuthenticatedUser, input: ManualJournalInput, requestKey: string) {
     this.assertConfigured();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new BadRequestException('Invalid journal date.');
     if (!input.description?.trim()) throw new BadRequestException('Journal description is required.');
     if (!Array.isArray(input.lines) || input.lines.length < 2) throw new BadRequestException('Journal requires at least two lines.');
-    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_manual_journal`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_entry_date: input.date, p_description: input.description.trim(), p_lines: input.lines.map((line) => ({ account_id: line.accountId, debit: line.debit, credit: line.credit })) }) });
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/post_manual_journal_idempotent`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_entry_date: input.date, p_description: input.description.trim(), p_lines: input.lines.map((line) => ({ account_id: line.accountId, debit: line.debit, credit: line.credit })), p_request_key: requestKey }) });
     if (!response.ok) throw new BadRequestException(await this.errorMessage(response, 'Unable to post manual journal.'));
     return response.json();
   }
 
-  async reverse(user: AuthenticatedUser, journalEntryId: string, reason: string) {
+  async reverse(user: AuthenticatedUser, journalEntryId: string, reason: string, requestKey: string) {
     this.assertConfigured();
     if (!reason?.trim()) throw new BadRequestException('Reversal reason is required.');
-    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/reverse_manual_journal`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_journal_entry_id: journalEntryId, p_reason: reason.trim() }) });
+    const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/reverse_manual_journal_idempotent`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_actor_id: user.id, p_journal_entry_id: journalEntryId, p_reason: reason.trim(), p_request_key: requestKey }) });
     if (!response.ok) throw new BadRequestException(await this.errorMessage(response, 'Unable to reverse journal.'));
     return response.json();
   }
