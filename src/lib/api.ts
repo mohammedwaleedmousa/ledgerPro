@@ -13,10 +13,12 @@ async function accessToken() {
   return token;
 }
 
+function mutationKey() {
+  return globalThis.crypto?.randomUUID?.() ?? `mutation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  if (!apiUrl) {
-    throw new Error('واجهة LedgerPro الخلفية غير مهيأة. أضف VITE_API_URL.');
-  }
+  if (!apiUrl) throw new Error('واجهة LedgerPro الخلفية غير مهيأة. أضف VITE_API_URL.');
 
   const token = await accessToken();
   const headers = new Headers(init.headers);
@@ -24,10 +26,12 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   headers.set('Accept', 'application/json');
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 
-  const response = await fetch(`${apiUrl}${path.startsWith('/') ? path : `/${path}`}`, {
-    ...init,
-    headers,
-  });
+  const method = (init.method ?? 'GET').toUpperCase();
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !headers.has('Idempotency-Key')) {
+    headers.set('Idempotency-Key', mutationKey());
+  }
+
+  const response = await fetch(`${apiUrl}${path.startsWith('/') ? path : `/${path}`}`, { ...init, headers });
 
   if (!response.ok) {
     let message = `تعذر تنفيذ الطلب (${response.status}).`;
