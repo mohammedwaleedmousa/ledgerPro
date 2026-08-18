@@ -8,6 +8,7 @@ type Props = {
   paymentMethod: PaymentMethod;
   status: InvoiceStatus;
   notes: string;
+  statusLocked?: boolean;
   onCustomerChange: (value: string) => void;
   onIssueDateChange: (value: string) => void;
   onPaymentMethodChange: (value: PaymentMethod) => void;
@@ -43,9 +44,10 @@ export default function InvoiceForm(props: Props) {
 
         <div className="space-y-1.5">
           <label htmlFor="invoice-status" className="block text-[11px] font-bold text-slate-600">الحالة</label>
-          <select id="invoice-status" value={props.status} onChange={(event) => props.onStatusChange(event.target.value as InvoiceStatus)} className="min-h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50">
+          <select id="invoice-status" value={props.status} disabled={props.statusLocked} onChange={(event) => props.onStatusChange(event.target.value as InvoiceStatus)} className="min-h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500">
             <option value="draft">مسودة</option><option value="sent">مرسلة</option><option value="paid">مدفوعة</option><option value="overdue">متأخرة</option>
           </select>
+          {props.statusLocked && <p className="text-[9px] leading-4 text-slate-400">يحددها الخادم تلقائيًا حسب طريقة الدفع.</p>}
         </div>
 
         <div className="space-y-1.5 md:col-span-2 xl:col-span-4">
